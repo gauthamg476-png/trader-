@@ -1,0 +1,197 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 
+  Trading Business Management System - Design System
+  Theme: Agricultural commodities trading with warm, earthy tones
+  Note: This system can be upgraded to a real database backend later
+*/
+
+@layer base {
+  :root {
+    /* Core Colors - Warm agricultural theme */
+    --background: 40 33% 98%;
+    --foreground: 25 30% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 25 30% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 25 30% 15%;
+
+    /* Primary - Forest Green (Trust, Agriculture) */
+    --primary: 142 45% 28%;
+    --primary-foreground: 40 33% 98%;
+
+    /* Secondary - Warm Amber/Gold (Premium Quality) */
+    --secondary: 38 80% 55%;
+    --secondary-foreground: 25 30% 15%;
+
+    /* Muted - Soft earth tones */
+    --muted: 35 20% 92%;
+    --muted-foreground: 25 15% 45%;
+
+    /* Accent - Rich brown */
+    --accent: 25 45% 35%;
+    --accent-foreground: 40 33% 98%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Success - For confirmed orders */
+    --success: 142 70% 40%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning - For bulk/waiting orders */
+    --warning: 38 92% 50%;
+    --warning-foreground: 25 30% 15%;
+
+    --border: 35 25% 85%;
+    --input: 35 25% 85%;
+    --ring: 142 45% 28%;
+
+    --radius: 0.625rem;
+
+    /* Sidebar - Admin dashboard */
+    --sidebar-background: 142 40% 22%;
+    --sidebar-foreground: 40 33% 95%;
+    --sidebar-primary: 38 80% 55%;
+    --sidebar-primary-foreground: 25 30% 15%;
+    --sidebar-accent: 142 35% 30%;
+    --sidebar-accent-foreground: 40 33% 95%;
+    --sidebar-border: 142 30% 28%;
+    --sidebar-ring: 38 80% 55%;
+
+    /* Custom gradients and shadows */
+    --gradient-hero: linear-gradient(135deg, hsl(142, 45%, 28%) 0%, hsl(142, 40%, 22%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(38, 80%, 55%) 0%, hsl(30, 85%, 50%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0, 0%, 100%) 0%, hsl(40, 33%, 98%) 100%);
+    --shadow-soft: 0 4px 20px -4px hsl(25, 30%, 15%, 0.1);
+    --shadow-elevated: 0 8px 30px -8px hsl(25, 30%, 15%, 0.15);
+    --shadow-glow: 0 0 40px -10px hsl(38, 80%, 55%, 0.3);
+  }
+
+  .dark {
+    --background: 25 30% 8%;
+    --foreground: 40 33% 95%;
+
+    --card: 25 25% 12%;
+    --card-foreground: 40 33% 95%;
+
+    --popover: 25 25% 12%;
+    --popover-foreground: 40 33% 95%;
+
+    --primary: 142 50% 45%;
+    --primary-foreground: 25 30% 8%;
+
+    --secondary: 38 75% 50%;
+    --secondary-foreground: 25 30% 8%;
+
+    --muted: 25 20% 18%;
+    --muted-foreground: 35 15% 60%;
+
+    --accent: 25 40% 45%;
+    --accent-foreground: 40 33% 95%;
+
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 60% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 85% 55%;
+    --warning-foreground: 25 30% 8%;
+
+    --border: 25 20% 22%;
+    --input: 25 20% 22%;
+    --ring: 142 50% 45%;
+
+    --sidebar-background: 25 30% 6%;
+    --sidebar-foreground: 40 33% 95%;
+    --sidebar-primary: 38 75% 50%;
+    --sidebar-primary-foreground: 25 30% 8%;
+    --sidebar-accent: 25 25% 15%;
+    --sidebar-accent-foreground: 40 33% 95%;
+    --sidebar-border: 25 20% 18%;
+    --sidebar-ring: 38 75% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-tight;
+  }
+}
+
+@layer components {
+  /* Hero section styles */
+  .hero-gradient {
+    background: var(--gradient-hero);
+  }
+
+  .gold-gradient {
+    background: var(--gradient-gold);
+  }
+
+  /* Card enhancements */
+  .card-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .card-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Status badges */
+  .status-confirmed {
+    @apply bg-success text-success-foreground;
+  }
+
+  .status-bulk {
+    @apply bg-warning text-warning-foreground;
+  }
+
+  /* Admin sidebar active state */
+  .sidebar-item-active {
+    @apply bg-sidebar-accent text-sidebar-accent-foreground;
+  }
+
+  /* Print styles for order summary */
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    
+    .print-only {
+      display: block !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Smooth transitions */
+  .transition-smooth {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  /* Text gradient */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+  }
+
+  /* Backdrop blur for overlays */
+  .backdrop-blur-custom {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}
