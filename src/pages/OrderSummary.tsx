@@ -86,11 +86,11 @@ export default function OrderSummary() {
                   </div>
                 </div>
                 <CardTitle className="text-2xl">
-                  {order.status === 'confirmed' ? 'Order Confirmed!' : 'Bulk Order Placed'}
+                  {order.status === 'confirmed' ? 'Order Placed' : 'Bulk Order Placed'}
                 </CardTitle>
                 <p className="text-muted-foreground">
                   {order.status === 'confirmed'
-                    ? 'Your order has been confirmed and will be delivered soon.'
+                    ? 'Your order has been placed successfully and will be delivered soon.'
                     : 'Your bulk order will be processed within 10-15 days.'}
                 </p>
               </CardHeader>
@@ -155,11 +155,13 @@ export default function OrderSummary() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Subtotal</span>
-                      <span>₹{order.totalPrice.toLocaleString()}</span>
+                      <span>₹{(order.subtotal || (order.quantity * order.pricePerUnit)).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Shipping</span>
-                      <span className="text-success">Free</span>
+                      <span className="text-muted-foreground">
+                        Shipping ({order.shippingPercentage || 10}%)
+                      </span>
+                      <span>₹{(order.shippingCost || 0).toLocaleString()}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between">
@@ -186,10 +188,10 @@ export default function OrderSummary() {
             <div className="hidden print:block mt-8 text-center text-sm text-muted-foreground">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Package className="h-5 w-5" />
-                <span className="font-semibold">Thanvi Trader</span>
+                <span className="font-semibold">BALAJI & CO</span>
               </div>
-              <p>123 Trading Street, Market District, City 12345</p>
-              <p>info@thanvitrader.com | +1 234 567 890</p>
+              <p>No. 65/3, Elaya Mudall Street, Tondiarpet, Chennai - 600 081</p>
+              <p>info@balajicotrader.com | +91 9940380881</p>
               <p className="mt-4 text-xs">Thank you for your business!</p>
             </div>
           </div>

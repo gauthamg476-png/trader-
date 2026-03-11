@@ -1,0 +1,57 @@
+-- Create Admin User Directly (Bypass OTP)
+-- Run this in Supabase SQL Editor
+
+-- Step 1: Create the auth user
+DO $$
+DECLARE
+    admin_user_id uuid := gen_random_uuid();
+BEGIN
+    -- Insert into auth.users
+    INSERT INTO auth.users (
+        id,
+        instance_id,
+        email,
+        encrypted_password,
+        email_confirmed_at,
+        created_at,
+        updated_at,
+        role,
+        aud,
+        confirmation_token,
+        email_change_token_new,
+        recovery_token
+    ) VALUES (
+        admin_user_id,
+        '00000000-0000-0000-0000-000000000000',
+        'admin@thanvitrader.local',
+        crypt('admin123', gen_salt('bf')),
+        now(),
+        now(),
+        now(),
+        'authenticated',
+        'authenticated',
+        '',
+        '',
+        ''
+    );
+
+    -- Insert into profiles
+    INSERT INTO public.profiles (
+        id,
+        username,
+        email,
+        role,
+        business_type,
+        created_at
+    ) VALUES (
+        admin_user_id,
+        'admin',
+        'admin@balajicotrader.com',
+        'admin',
+        NULL,
+        now()
+    );
+
+    RAISE NOTICE 'Admin user created successfully with ID: %', admin_user_id;
+    RAISE NOTICE 'Login credentials: username=admin, password=admin123';
+END $$;

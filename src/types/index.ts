@@ -28,6 +28,20 @@ export interface Product {
 
 export type OrderStatus = 'confirmed' | 'packed' | 'pending' | 'delivered';
 
+export type PaymentMethod = 'razorpay' | 'cash_on_delivery';
+export type PaymentStatus = 'pending' | 'advance_paid' | 'fully_paid' | 'failed';
+
+export interface PaymentInfo {
+  method: PaymentMethod;
+  status: PaymentStatus;
+  advanceAmount: number;
+  remainingAmount: number;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  advancePaidAt?: string;
+  fullPaymentAt?: string;
+}
+
 export type CateringOrderStatus = 'pending' | 'confirmed' | 'in-preparation' | 'ready' | 'delivered';
 
 export interface Order {
@@ -39,6 +53,10 @@ export interface Order {
   quantity: number;
   pricePerUnit: number;
   totalPrice: number;
+  subtotal?: number;
+  shippingCost?: number;
+  shippingPercentage?: number;
+  paymentInfo?: PaymentInfo;
   status: OrderStatus;
   estimatedDelivery?: string;
   createdAt: string;

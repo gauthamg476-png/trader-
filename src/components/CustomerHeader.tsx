@@ -50,11 +50,6 @@ export function CustomerHeader() {
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <User className="h-4 w-4" />
             <span>{user?.username}</span>
-            {user?.businessType && (
-              <span className="text-xs bg-muted px-2 py-0.5 rounded-full">
-                {user.businessType}
-              </span>
-            )}
           </div>
           <Button variant="outline" size="sm" onClick={handleLogout}>
             <LogOut className="h-4 w-4 mr-2" />

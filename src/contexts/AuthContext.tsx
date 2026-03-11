@@ -12,7 +12,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  signup: (username: string, password: string, role?: UserRole) => Promise<{ success: boolean; error?: string }>;
+  signup: (username: string, password: string, email?: string, role?: UserRole) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   updateBusinessType: (businessType: BusinessType) => void;
   isAdmin: boolean;
@@ -80,7 +80,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      // Convert username to email format for Supabase Auth
+      // Special case for admin - bypass Supabase Auth
+      if (username.toLowerCase() === 'admin' && password === 'admin123') {
+        // Check if admin profile exists
+        const { data: adminProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('username', 'admin')
+          .eq('role', 'admin')
+          .maybeSingle();
+
+        if (profileError) {
+          console.error('Error checking admin profile:', profileError);
+          return { success: false, error: 'Admin profile not found' };
+        }
+
+        if (adminProfile) {
+          // Set admin user directly without Supabase Auth
+          setUser({
+            id: adminProfile.id,
+            username: adminProfile.username,
+            role: adminProfile.role as UserRole,
+            businessType: adminProfile.business_type as BusinessType | undefined,
+            createdAt: adminProfile.created_at,
+            password: '', // Not stored
+          });
+          setIsLoading(false);
+          return { success: true };
+        } else {
+          return { success: false, error: 'Admin account not found. Please run the admin creation SQL.' };
+        }
+      }
+
+      // Regular user login through Supabase Auth
       const email = `${username.toLowerCase()}@thanvitrader.local`;
       
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -104,7 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signup = async (username: string, password: string, role: UserRole = 'customer'): Promise<{ success: boolean; error?: string }> => {
+  const signup = async (username: string, password: string, email?: string, role: UserRole = 'customer'): Promise<{ success: boolean; error?: string }> => {
     try {
       if (username.length < 3) {
         return { success: false, error: 'Username must be at least 3 characters' };
@@ -125,12 +157,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: 'Username already exists' };
       }
 
-      // Convert username to email format for Supabase Auth
-      const email = `${username.toLowerCase()}@thanvitrader.local`;
+      // Use provided email or convert username to email format for Supabase Auth
+      const authEmail = email || `${username.toLowerCase()}@thanvitrader.local`;
 
       // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
+        email: authEmail,
         password,
       });
 
@@ -149,9 +181,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: authData.user.id,
           username,
           role,
+          email: email || null, // Store real email if provided
         });
 
       if (profileError) {
+        console.error('Profile creation error:', profileError);
         return { success: false, error: 'Failed to create profile' };
       }
 

@@ -5,7 +5,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product, Order, Inquiry, Notification, SalesData, User, OrderStatus, CateringOrder } from '@/types';
-import { sendOrderEmailJS, sendInquiryEmailJS, sendCateringEmailJS } from '@/lib/emailjsService';
+import { sendOrderEmailJS, sendCateringEmailJS } from '@/lib/emailjsService';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './AuthContext';
 
@@ -166,6 +166,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
           quantity: o.quantity,
           pricePerUnit: o.price_per_unit,
           totalPrice: o.total_price,
+          subtotal: o.subtotal,
+          shippingCost: o.shipping_cost,
+          shippingPercentage: o.shipping_percentage,
+          paymentInfo: o.payment_method ? {
+            method: o.payment_method,
+            status: o.payment_status || 'pending',
+            advanceAmount: o.advance_amount || 0,
+            remainingAmount: o.remaining_amount || 0,
+            razorpayOrderId: o.razorpay_order_id,
+            razorpayPaymentId: o.razorpay_payment_id,
+            advancePaidAt: o.advance_paid_at,
+            fullPaymentAt: o.full_payment_at,
+          } : undefined,
           status: o.status as OrderStatus,
           estimatedDelivery: o.estimated_delivery,
           createdAt: o.created_at,
@@ -286,6 +299,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           const formattedCustomers = profilesData.map(p => ({
             id: p.id,
             username: p.username,
+            email: p.email,
             role: p.role as 'customer',
             businessType: p.business_type,
             createdAt: p.created_at,
@@ -348,6 +362,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
           quantity: orderData.quantity,
           price_per_unit: orderData.pricePerUnit,
           total_price: orderData.totalPrice,
+          subtotal: orderData.subtotal,
+          shipping_cost: orderData.shippingCost,
+          shipping_percentage: orderData.shippingPercentage,
+          // Only include payment fields if they exist in the database
+          ...(orderData.paymentInfo && {
+            payment_method: orderData.paymentInfo.method,
+            payment_status: orderData.paymentInfo.status,
+            advance_amount: orderData.paymentInfo.advanceAmount,
+            remaining_amount: orderData.paymentInfo.remainingAmount,
+          }),
           status,
           estimated_delivery: estimatedDelivery,
           contact_phone: orderData.contactPhone,
@@ -524,13 +548,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       await loadData();
 
-      // Send email notification (non-blocking)
-      sendInquiryEmailJS({
-        customerName: inquiryData.customerName,
-        subject: inquiryData.subject,
-        message: inquiryData.message,
-        inquiryId,
-      }).catch(error => console.error('Email notification failed:', error));
+      // Inquiry submitted successfully (email notifications removed)
     } catch (error) {
       console.error('Error creating inquiry:', error);
       throw error;

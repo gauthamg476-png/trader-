@@ -116,6 +116,7 @@ export default function AdminCustomers() {
                 <TableHeader>
                   <TableRow className="bg-muted/50">
                     <TableHead>Username</TableHead>
+                    <TableHead>Email</TableHead>
                     <TableHead>Business Type</TableHead>
                     <TableHead className="text-right">Orders</TableHead>
                     <TableHead className="text-right">Total Spent</TableHead>
@@ -125,7 +126,7 @@ export default function AdminCustomers() {
                 <TableBody>
                   {customers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                         No customers registered yet
                       </TableCell>
                     </TableRow>
@@ -148,6 +149,11 @@ export default function AdminCustomers() {
                               </div>
                               <span className="font-medium">{customer.username}</span>
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground">
+                              {customer.email || 'Not provided'}
+                            </span>
                           </TableCell>
                           <TableCell>
                             {customer.businessType ? (

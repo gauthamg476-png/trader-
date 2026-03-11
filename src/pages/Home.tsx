@@ -7,6 +7,7 @@ import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight, Package, TrendingUp, Users, Clock } from 'lucide-react';
+import CountUp from '@/components/CountUp';
 import heroBg from '@/assets/hero-bg.jpg';
 
 export default function Home() {
@@ -81,25 +82,57 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-4">
               <Card className="bg-primary/5 border-primary/20">
                 <CardContent className="p-6 text-center">
-                  <div className="text-3xl font-bold text-primary mb-1">500+</div>
+                  <div className="text-3xl font-bold text-primary mb-1">
+                    <CountUp 
+                      to={500} 
+                      duration={2.5}
+                      delay={0.2}
+                      className="text-3xl font-bold text-primary"
+                    />
+                    <span className="text-3xl font-bold text-primary">+</span>
+                  </div>
                   <div className="text-sm text-muted-foreground">Happy Clients</div>
                 </CardContent>
               </Card>
               <Card className="bg-secondary/10 border-secondary/30">
                 <CardContent className="p-6 text-center">
-                  <div className="text-3xl font-bold text-secondary mb-1">15+</div>
+                  <div className="text-3xl font-bold text-secondary mb-1">
+                    <CountUp 
+                      to={15} 
+                      duration={2}
+                      delay={0.4}
+                      className="text-3xl font-bold text-secondary"
+                    />
+                    <span className="text-3xl font-bold text-secondary">+</span>
+                  </div>
                   <div className="text-sm text-muted-foreground">Years Experience</div>
                 </CardContent>
               </Card>
               <Card className="bg-accent/10 border-accent/30">
                 <CardContent className="p-6 text-center">
-                  <div className="text-3xl font-bold text-accent mb-1">50K+</div>
+                  <div className="text-3xl font-bold text-accent mb-1">
+                    <CountUp 
+                      to={50} 
+                      duration={2.2}
+                      delay={0.6}
+                      className="text-3xl font-bold text-accent"
+                    />
+                    <span className="text-3xl font-bold text-accent">K+</span>
+                  </div>
                   <div className="text-sm text-muted-foreground">Tons Delivered</div>
                 </CardContent>
               </Card>
               <Card className="bg-success/10 border-success/30">
                 <CardContent className="p-6 text-center">
-                  <div className="text-3xl font-bold text-success mb-1">98%</div>
+                  <div className="text-3xl font-bold text-success mb-1">
+                    <CountUp 
+                      to={98} 
+                      duration={2.8}
+                      delay={0.8}
+                      className="text-3xl font-bold text-success"
+                    />
+                    <span className="text-3xl font-bold text-success">%</span>
+                  </div>
                   <div className="text-sm text-muted-foreground">Satisfaction Rate</div>
                 </CardContent>
               </Card>
@@ -175,7 +208,7 @@ export default function Home() {
             </h2>
             <Button asChild variant="outline">
               <Link to="/products">
-                View All
+                Purchase
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

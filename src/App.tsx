@@ -10,9 +10,11 @@ import { DataProvider } from "@/contexts/DataContext";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
 import CustomerBackground from "./pages/CustomerBackground";
 import Home from "./pages/Home";
 import Products from "./pages/Products";
+import Payment from "./pages/Payment";
 import Catering from "./pages/Catering";
 import MyOrders from "./pages/MyOrders";
 import OrderSummary from "./pages/OrderSummary";
@@ -40,9 +42,11 @@ const App = () => (
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/customer-background" element={<CustomerBackground />} />
               <Route path="/home" element={<Home />} />
               <Route path="/products" element={<Products />} />
+              <Route path="/payment/:orderId" element={<Payment />} />
               <Route path="/catering" element={<Catering />} />
               <Route path="/my-orders" element={<MyOrders />} />
               <Route path="/order-summary/:orderId" element={<OrderSummary />} />

@@ -15,7 +15,6 @@ import emailjs from '@emailjs/browser';
 // EmailJS Configuration
 const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || '';
 const EMAILJS_TEMPLATE_ID_ORDER = import.meta.env.VITE_EMAILJS_TEMPLATE_ID_ORDER || '';
-const EMAILJS_TEMPLATE_ID_INQUIRY = import.meta.env.VITE_EMAILJS_TEMPLATE_ID_INQUIRY || '';
 const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '';
 
 /**
@@ -88,62 +87,6 @@ export async function sendOrderEmailJS(orderData: {
     return {
       success: false,
       message: 'Order created successfully (email notification skipped)',
-    };
-  }
-}
-
-/**
- * Send inquiry notification email
- */
-export async function sendInquiryEmailJS(inquiryData: {
-  customerName: string;
-  subject: string;
-  message: string;
-  inquiryId: string;
-}): Promise<{ success: boolean; message: string }> {
-  try {
-    if (!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID_INQUIRY || !EMAILJS_PUBLIC_KEY) {
-      console.warn('⚠️ EmailJS not configured - skipping email notification');
-      return {
-        success: false,
-        message: 'Email service not configured',
-      };
-    }
-
-    const templateParams = {
-      to_email: 'gauthamg476@gmail.com', // Admin email
-      customer_name: inquiryData.customerName,
-      subject: inquiryData.subject,
-      message: inquiryData.message,
-      inquiry_id: inquiryData.inquiryId,
-      inquiry_date: new Date().toLocaleString('en-IN', {
-        dateStyle: 'full',
-        timeStyle: 'short',
-      }),
-    };
-
-    const response = await emailjs.send(
-      EMAILJS_SERVICE_ID,
-      EMAILJS_TEMPLATE_ID_INQUIRY,
-      templateParams,
-      EMAILJS_PUBLIC_KEY
-    );
-
-    console.log('✅ Inquiry email sent successfully:', response.status);
-    return {
-      success: true,
-      message: 'Inquiry notification sent',
-    };
-  } catch (error: any) {
-    console.warn('⚠️ Email notification failed (non-critical):', {
-      status: error?.status,
-      text: error?.text,
-      message: error?.message,
-    });
-    
-    return {
-      success: false,
-      message: 'Inquiry submitted successfully (email notification skipped)',
     };
   }
 }

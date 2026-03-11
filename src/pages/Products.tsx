@@ -9,10 +9,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ShoppingCart, Package, AlertCircle, CheckCircle } from 'lucide-react';
+import { ShoppingCart, Package, AlertCircle, CheckCircle, Truck, CreditCard, Banknote } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Product } from '@/types';
+import { Product, PaymentMethod } from '@/types';
+import { calculateShipping, getShippingTierDescription, formatShippingCost } from '@/lib/shippingCalculator';
+import { calculatePaymentBreakdown } from '@/lib/razorpayService';
 
 export default function Products() {
   const { user, isLoading } = useAuth();
@@ -24,6 +27,7 @@ export default function Products() {
   const [quantity, setQuantity] = useState('');
   const [contactPhone, setContactPhone] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('razorpay');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -45,6 +49,7 @@ export default function Products() {
     setQuantity('');
     setContactPhone('');
     setDeliveryAddress('');
+    setPaymentMethod('razorpay');
     setIsDialogOpen(true);
   };
 
@@ -68,8 +73,12 @@ export default function Products() {
     }
 
     const qty = parseInt(quantity);
+    const subtotal = qty * selectedProduct.price;
+    const shipping = calculateShipping(qty, subtotal);
+    const payment = calculatePaymentBreakdown(shipping.finalTotal, paymentMethod);
     
     try {
+      // Create order with payment information
       const order = await createOrder({
         customerId: user.id,
         customerName: user.username,
@@ -77,21 +86,28 @@ export default function Products() {
         productName: selectedProduct.name,
         quantity: qty,
         pricePerUnit: selectedProduct.price,
-        totalPrice: qty * selectedProduct.price,
+        totalPrice: shipping.finalTotal,
+        subtotal: subtotal,
+        shippingCost: shipping.shippingCost,
+        shippingPercentage: shipping.shippingPercentage,
+        paymentInfo: {
+          method: paymentMethod,
+          status: 'pending',
+          advanceAmount: payment.advanceAmount,
+          remainingAmount: payment.remainingAmount,
+        },
         contactPhone,
         deliveryAddress,
       });
 
       setIsDialogOpen(false);
       
-      toast({
-        title: order.status === 'confirmed' ? 'Order Confirmed!' : 'Bulk Order Placed',
-        description: order.status === 'confirmed' 
-          ? 'Your order has been confirmed and will be delivered soon.'
-          : 'Stock is limited. Your bulk order will be fulfilled within 10-15 days.',
-      });
-
-      navigate(`/order-summary/${order.id}`);
+      // Redirect to payment page for both payment methods
+      if (paymentMethod === 'razorpay' || paymentMethod === 'cash_on_delivery') {
+        navigate(`/payment/${order.id}`);
+      } else {
+        navigate(`/order-summary/${order.id}`);
+      }
     } catch (error) {
       console.error('Error creating order:', error);
       toast({
@@ -172,7 +188,7 @@ export default function Products() {
 
       {/* Order Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Place Order - {selectedProduct?.name}</DialogTitle>
             <DialogDescription>
@@ -235,14 +251,110 @@ export default function Products() {
                 />
               </div>
 
+              <div className="space-y-3">
+                <Label>Payment Method *</Label>
+                <RadioGroup value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}>
+                  <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                    <RadioGroupItem value="razorpay" id="razorpay" />
+                    <Label htmlFor="razorpay" className="flex items-center gap-2 cursor-pointer flex-1">
+                      <CreditCard className="h-4 w-4 text-primary" />
+                      <div>
+                        <p className="font-medium">Online Payment</p>
+                        <p className="text-xs text-muted-foreground">Pay full amount online via Razorpay</p>
+                      </div>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                    <RadioGroupItem value="cash_on_delivery" id="cash_on_delivery" />
+                    <Label htmlFor="cash_on_delivery" className="flex items-center gap-2 cursor-pointer flex-1">
+                      <Banknote className="h-4 w-4 text-secondary" />
+                      <div>
+                        <p className="font-medium">Cash on Delivery</p>
+                        <p className="text-xs text-muted-foreground">Pay 10% advance online, rest on delivery</p>
+                      </div>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
               {quantity && parseInt(quantity) > 0 && (
                 <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Total Price:</span>
-                    <span className="font-bold text-lg">
-                      ₹{(parseInt(quantity) * selectedProduct.price).toLocaleString()}
-                    </span>
-                  </div>
+                  {(() => {
+                    const qty = parseInt(quantity);
+                    const subtotal = qty * selectedProduct.price;
+                    const shipping = calculateShipping(qty, subtotal);
+                    const payment = calculatePaymentBreakdown(shipping.finalTotal, paymentMethod);
+                    
+                    return (
+                      <>
+                        <div className="space-y-2 p-4 bg-muted/50 rounded-lg">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Subtotal ({qty} kg):</span>
+                            <span className="font-medium">₹{subtotal.toLocaleString()}</span>
+                          </div>
+                          
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground flex items-center gap-1">
+                              <Truck className="h-3 w-3" />
+                              Shipping ({shipping.shippingPercentage}%):
+                            </span>
+                            <span className="font-medium">{formatShippingCost(shipping.shippingCost)}</span>
+                          </div>
+                          
+                          <div className="border-t pt-2">
+                            <div className="flex justify-between">
+                              <span className="font-semibold">Total Amount:</span>
+                              <span className="font-bold text-lg text-primary">
+                                ₹{shipping.finalTotal.toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <p className="text-xs text-muted-foreground">
+                            {getShippingTierDescription(qty)}
+                          </p>
+                        </div>
+
+                        {/* Payment Breakdown */}
+                        <div className="space-y-2 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            {paymentMethod === 'razorpay' ? (
+                              <CreditCard className="h-4 w-4 text-primary" />
+                            ) : (
+                              <Banknote className="h-4 w-4 text-secondary" />
+                            )}
+                            <span className="font-medium text-sm">Payment Breakdown</span>
+                          </div>
+                          
+                          {paymentMethod === 'cash_on_delivery' ? (
+                            <>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">Advance Payment (10%):</span>
+                                <span className="font-medium text-primary">₹{payment.advanceAmount.toLocaleString()}</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">Cash on Delivery:</span>
+                                <span className="font-medium">₹{payment.remainingAmount.toLocaleString()}</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                Pay ₹{payment.advanceAmount.toLocaleString()} now, remaining ₹{payment.remainingAmount.toLocaleString()} on delivery
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">Online Payment (100%):</span>
+                                <span className="font-medium text-primary">₹{payment.advanceAmount.toLocaleString()}</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                Full payment via Razorpay - secure and instant
+                              </p>
+                            </>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
 
                   {parseInt(quantity) > selectedProduct.stock ? (
                     <div className="flex items-start gap-2 p-3 bg-warning/10 border border-warning/30 rounded-lg">
@@ -275,8 +387,14 @@ export default function Products() {
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handlePlaceOrder} disabled={!quantity || parseInt(quantity) <= 0 || !contactPhone || !deliveryAddress}>
-              Confirm Order
+            <Button 
+              onClick={handlePlaceOrder} 
+              disabled={!quantity || parseInt(quantity) <= 0 || !contactPhone || !deliveryAddress}
+            >
+              {paymentMethod === 'razorpay' 
+                ? 'Proceed to Payment' 
+                : 'Pay Advance & Order'
+              }
             </Button>
           </DialogFooter>
         </DialogContent>

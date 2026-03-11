@@ -41,10 +41,10 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-4">Contact</h4>
             <ul className="space-y-2 text-sm text-primary-foreground/70">
-              <li>123 Trading Street</li>
-              <li>Market District, City 12345</li>
+              <li>No. 65/3, Elaya Mudall Street</li>
+              <li>Tondiarpet, Chennai - 600 081</li>
               <li>info@balajicotrader.com</li>
-              <li>+1 234 567 890</li>
+              <li>+91 9940380881</li>
             </ul>
           </div>
         </div>
