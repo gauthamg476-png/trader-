@@ -27,15 +27,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('🔍 Checking existing session:', session ? 'Found' : 'None');
       if (session?.user) {
+        console.log('👤 Loading profile for user:', session.user.email);
         loadUserProfile(session.user);
       } else {
+        console.log('❌ No existing session found');
         setIsLoading(false);
       }
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔄 Auth state change:', event, session ? 'Session exists' : 'No session');
       if (session?.user) {
         loadUserProfile(session.user);
       } else {
@@ -80,8 +84,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
+      console.log('🔐 Login attempt for username:', username);
+      
       // Special case for admin - bypass Supabase Auth
       if (username.toLowerCase() === 'admin' && password === 'admin123') {
+        console.log('👑 Admin login detected, bypassing Supabase Auth');
+        
         // Check if admin profile exists
         const { data: adminProfile, error: profileError } = await supabase
           .from('profiles')
@@ -91,11 +99,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .maybeSingle();
 
         if (profileError) {
-          console.error('Error checking admin profile:', profileError);
+          console.error('❌ Error checking admin profile:', profileError);
           return { success: false, error: 'Admin profile not found' };
         }
 
         if (adminProfile) {
+          console.log('✅ Admin profile found, logging in directly');
           // Set admin user directly without Supabase Auth
           setUser({
             id: adminProfile.id,
@@ -108,12 +117,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsLoading(false);
           return { success: true };
         } else {
+          console.error('❌ Admin profile not found in database');
           return { success: false, error: 'Admin account not found. Please run the admin creation SQL.' };
         }
       }
 
       // Regular user login through Supabase Auth
+      console.log('👤 Regular user login, using Supabase Auth');
       const email = `${username.toLowerCase()}@thanvitrader.local`;
+      console.log('📧 Converting username to email:', email);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -121,17 +133,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) {
+        console.error('❌ Supabase Auth error:', error);
         return { success: false, error: 'Invalid username or password' };
       }
 
       if (data.user) {
+        console.log('✅ Supabase Auth successful, loading profile');
         await loadUserProfile(data.user);
         return { success: true };
       }
 
       return { success: false, error: 'Login failed' };
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('❌ Login error:', error);
       return { success: false, error: 'An error occurred during login' };
     }
   };
