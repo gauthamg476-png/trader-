@@ -45,7 +45,7 @@ export default function AdminProducts() {
     setIsDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selectedProduct) return;
 
     const price = parseFloat(editPrice);
@@ -69,14 +69,25 @@ export default function AdminProducts() {
       return;
     }
 
-    updateProduct(selectedProduct.id, { price, stock });
-    
-    toast({
-      title: 'Product updated!',
-      description: `${selectedProduct.name} has been updated successfully.`,
-    });
+    try {
+      console.log('🔄 Saving product update:', { productId: selectedProduct.id, price, stock });
+      
+      await updateProduct(selectedProduct.id, { price, stock });
+      
+      toast({
+        title: 'Product updated!',
+        description: `${selectedProduct.name} price updated to ₹${price} and stock to ${stock} ${selectedProduct.unit}.`,
+      });
 
-    setIsDialogOpen(false);
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error('❌ Failed to update product:', error);
+      toast({
+        title: 'Update failed',
+        description: 'Failed to update product. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const getStockStatus = (stock: number) => {

@@ -23,29 +23,12 @@ export default function AdminAnalytics() {
   const { user, isLoading, isAdmin } = useAuth();
   const { orders, products } = useData();
   const navigate = useNavigate();
-  const [priceHistory, setPriceHistory] = useState<any[]>([]);
 
   useEffect(() => {
     if (!isLoading && (!user || !isAdmin)) {
       navigate('/login');
     }
   }, [user, isLoading, isAdmin, navigate]);
-
-  // Fetch price history from database
-  useEffect(() => {
-    const fetchPriceHistory = async () => {
-      const { data, error } = await supabase
-        .from('price_history')
-        .select('*')
-        .order('changed_at', { ascending: true });
-
-      if (!error && data) {
-        setPriceHistory(data);
-      }
-    };
-
-    fetchPriceHistory();
-  }, []);
 
   // Process real order data for analytics - Group by WEEK for last 90 days
   const ordersByDate = useMemo(() => {
@@ -374,99 +357,6 @@ export default function AdminAnalytics() {
               ) : (
                 <div className="h-full flex items-center justify-center text-muted-foreground">
                   No product sales data available
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Price Variation Over Time */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Price Variation Over Time (Last 90 Days)</CardTitle>
-            <CardDescription>Track how product prices have changed in the last 3 months</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[400px]">
-              {priceHistory.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={priceHistory
-                      .filter(ph => {
-                        const date = new Date(ph.changed_at);
-                        const ninetyDaysAgo = new Date();
-                        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-                        return date >= ninetyDaysAgo;
-                      })
-                      .map(ph => {
-                        const product = products.find(p => p.id === ph.product_id);
-                        return {
-                          date: new Date(ph.changed_at).toLocaleDateString('en-IN', { 
-                            month: 'short', 
-                            year: 'numeric' 
-                          }),
-                          fullDate: ph.changed_at,
-                          price: parseFloat(ph.price),
-                          product: product?.name.split(' ')[0] || 'Unknown',
-                          fullProduct: product?.name || 'Unknown Product',
-                        };
-                      })
-                      .sort((a, b) => new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime())}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis 
-                      dataKey="date" 
-                      tick={{ fontSize: 12 }}
-                      stroke="hsl(var(--muted-foreground))"
-                    />
-                    <YAxis 
-                      tick={{ fontSize: 12 }}
-                      stroke="hsl(var(--muted-foreground))"
-                      label={{ value: 'Price (₹/kg)', angle: -90, position: 'insideLeft' }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
-                      }}
-                      formatter={(value: number, name: string, props: any) => [
-                        `₹${value}/kg`,
-                        props.payload.fullProduct
-                      ]}
-                      labelFormatter={(label) => `Date: ${label}`}
-                    />
-                    <Legend />
-                    {products.map((product, index) => {
-                      const colors = [
-                        'hsl(var(--primary))',
-                        'hsl(var(--secondary))',
-                        'hsl(var(--accent))',
-                        '#10b981',
-                        '#f59e0b',
-                        '#ef4444',
-                      ];
-                      return (
-                        <Line
-                          key={product.id}
-                          type="monotone"
-                          dataKey={(entry: any) => 
-                            entry.product === product.name.split(' ')[0] ? entry.price : null
-                          }
-                          stroke={colors[index % colors.length]}
-                          strokeWidth={2}
-                          dot={{ fill: colors[index % colors.length], r: 4 }}
-                          name={product.name.split(' ')[0]}
-                          connectNulls
-                        />
-                      );
-                    })}
-                  </LineChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
-                  <p className="mb-2">No price history data available</p>
-                  <p className="text-sm">Price changes will be tracked automatically when you update product prices</p>
                 </div>
               )}
             </div>

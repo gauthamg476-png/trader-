@@ -319,7 +319,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const updateProduct = async (productId: string, updates: Partial<Product>) => {
     try {
-      const { error } = await supabase
+      console.log('🔄 Updating product:', productId, updates);
+      
+      const { data, error } = await supabase
         .from('products')
         .update({
           name: updates.name,
@@ -327,14 +329,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
           price: updates.price,
           stock: updates.stock,
           unit: updates.unit,
+          updated_at: new Date().toISOString(), // Add timestamp
         })
-        .eq('id', productId);
+        .eq('id', productId)
+        .select(); // Return updated data
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Supabase update error:', error);
+        throw error;
+      }
 
+      console.log('✅ Product updated in database:', data);
+      
+      // Refresh data to get latest from database
       await loadData();
+      
+      console.log('✅ Data refreshed');
     } catch (error) {
-      console.error('Error updating product:', error);
+      console.error('❌ Error updating product:', error);
       throw error;
     }
   };
