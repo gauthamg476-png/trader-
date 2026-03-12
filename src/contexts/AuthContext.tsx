@@ -11,7 +11,7 @@ import type { User as SupabaseUser } from '@supabase/supabase-js';
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (username: string, password: string, email?: string, role?: UserRole) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   updateBusinessType: (businessType: BusinessType) => void;
@@ -82,50 +82,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      console.log('🔐 Login attempt for username:', username);
+      console.log('🔐 Login attempt for email:', email);
       
       // Special case for admin - bypass Supabase Auth
-      if (username.toLowerCase() === 'admin' && password === 'admin123') {
+      if (email.toLowerCase() === 'admin@thanvitrader.local' && password === 'admin123') {
         console.log('👑 Admin login detected, bypassing Supabase Auth');
         
-        // Check if admin profile exists
+        // First, let's try to find any admin profile
+        console.log('🔍 Searching for admin profile...');
         const { data: adminProfile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
-          .eq('username', 'admin')
           .eq('role', 'admin')
           .maybeSingle();
 
+        console.log('🔍 Admin profile query result:', { adminProfile, profileError });
+
         if (profileError) {
           console.error('❌ Error checking admin profile:', profileError);
-          return { success: false, error: 'Admin profile not found' };
+          return { success: false, error: 'Database error occurred' };
         }
 
         if (adminProfile) {
           console.log('✅ Admin profile found, logging in directly');
-          // Set admin user directly without Supabase Auth
+          console.log('📋 Admin profile data:', adminProfile);
           setUser({
             id: adminProfile.id,
-            username: adminProfile.username,
+            username: adminProfile.username || 'admin',
             role: adminProfile.role as UserRole,
             businessType: adminProfile.business_type as BusinessType | undefined,
             createdAt: adminProfile.created_at,
-            password: '', // Not stored
+            password: '',
           });
           setIsLoading(false);
           return { success: true };
         } else {
-          console.error('❌ Admin profile not found in database');
-          return { success: false, error: 'Admin account not found. Please run the admin creation SQL.' };
+          console.error('❌ No admin profile found');
+          
+          // Let's also try to see what profiles exist
+          const { data: allProfiles } = await supabase
+            .from('profiles')
+            .select('*');
+          console.log('🔍 All profiles in database:', allProfiles);
+          
+          return { success: false, error: 'Admin profile not found in database. Please run the SQL setup script.' };
         }
       }
 
       // Regular user login through Supabase Auth
       console.log('👤 Regular user login, using Supabase Auth');
-      const email = `${username.toLowerCase()}@thanvitrader.local`;
-      console.log('📧 Converting username to email:', email);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -134,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error('❌ Supabase Auth error:', error);
-        return { success: false, error: 'Invalid username or password' };
+        return { success: false, error: 'Invalid email or password. Please check your credentials and try again.' };
       }
 
       if (data.user) {
@@ -191,16 +198,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Create profile
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert({
+        .upsert({
           id: authData.user.id,
           username,
           role,
           email: email || null, // Store real email if provided
+        }, {
+          onConflict: 'id',
+          ignoreDuplicates: false
         });
 
       if (profileError) {
         console.error('Profile creation error:', profileError);
-        return { success: false, error: 'Failed to create profile' };
+        
+        // If profile already exists with this username, try to update it instead
+        if (profileError.code === '23505') {
+          console.log('Profile exists, attempting to update...');
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({
+              id: authData.user.id,
+              role,
+              email: email || null,
+            })
+            .eq('username', username);
+          
+          if (updateError) {
+            console.error('Profile update error:', updateError);
+            return { success: false, error: 'Username already taken. Please choose a different username.' };
+          }
+        } else {
+          return { success: false, error: 'Failed to create profile' };
+        }
       }
 
       await loadUserProfile(authData.user);

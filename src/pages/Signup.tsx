@@ -13,7 +13,7 @@ import emailjs from '@emailjs/browser';
 export default function Signup() {
   const [step, setStep] = useState<'details' | 'otp'>('details');
   const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [otp, setOtp] = useState('');
@@ -77,7 +77,7 @@ export default function Signup() {
         
         const authEmailParams = {
           to_email: email, // Customer's email
-          to_name: username,
+          to_name: displayName,
           from_name: 'BALAJI & CO',
           subject: 'Verify Your Email - BALAJI & CO',
           company_name: 'BALAJI & CO',
@@ -151,7 +151,7 @@ export default function Signup() {
     }
 
     // Create account after OTP verification
-    const result = await signup(username, password, email);
+    const result = await signup(displayName, password, email);
 
     if (result.success) {
       toast({
@@ -176,7 +176,7 @@ export default function Signup() {
       const newOTP = generateAuthCode();
       setGeneratedOTP(newOTP);
       
-      const emailSent = await sendSignupOTP(email, newOTP, username);
+      const emailSent = await sendSignupOTP(email, newOTP, displayName);
       
       if (emailSent) {
         toast({
@@ -252,18 +252,18 @@ export default function Signup() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="displayName">Display Name</Label>
                   <Input
-                    id="username"
+                    id="displayName"
                     type="text"
-                    placeholder="Choose a username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Enter your display name"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
                     required
                     minLength={3}
-                    autoComplete="username"
+                    autoComplete="name"
                   />
-                  <p className="text-xs text-muted-foreground">At least 3 characters</p>
+                  <p className="text-xs text-muted-foreground">This will be shown in your orders</p>
                 </div>
 
                 <div className="space-y-2">

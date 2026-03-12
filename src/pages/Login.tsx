@@ -9,7 +9,7 @@ import { Package, ArrowLeft, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Login() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
@@ -20,7 +20,7 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
 
-    const result = await login(username, password);
+    const result = await login(email, password);
 
     if (result.success) {
       toast({
@@ -28,8 +28,8 @@ export default function Login() {
         description: 'You have been logged in successfully.',
       });
       
-      // Check if admin
-      if (username.toLowerCase() === 'admin') {
+      // Check if admin email
+      if (email.toLowerCase() === 'admin@thanvitrader.local') {
         navigate('/admin');
       } else {
         navigate('/home');
@@ -69,15 +69,15 @@ export default function Login() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  id="username"
-                  type="text"
-                  placeholder="Enter your username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
-                  autoComplete="username"
+                  autoComplete="email"
                 />
               </div>
 

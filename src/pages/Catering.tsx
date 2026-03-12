@@ -29,6 +29,7 @@ export default function Catering() {
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
   const [selectedItems, setSelectedItems] = useState<CateringItem[]>([]);
+  const [inputValues, setInputValues] = useState<Record<string, string>>({});
 
   // Calculate minimum order date (10 days from now)
   const minOrderDate = new Date();
@@ -64,6 +65,7 @@ export default function Catering() {
   const updateQuantity = (productId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
       setSelectedItems(items => items.filter(item => item.productId !== productId));
+      setInputValues(prev => ({ ...prev, [productId]: '' }));
     } else {
       setSelectedItems(items =>
         items.map(item =>
@@ -72,6 +74,7 @@ export default function Catering() {
             : item
         )
       );
+      setInputValues(prev => ({ ...prev, [productId]: newQuantity.toString() }));
     }
   };
 
@@ -278,16 +281,57 @@ export default function Catering() {
                           <Input
                             type="number"
                             placeholder="Enter quantity"
-                            value={selectedItem?.quantity || ''}
+                            value={inputValues[product.id] || ''}
                             onChange={(e) => {
                               const value = e.target.value;
+                              console.log('Input change:', product.id, value); // Debug log
+                              
+                              // Update input value immediately for responsive typing
+                              setInputValues(prev => ({ ...prev, [product.id]: value }));
+                              
                               if (value === '') {
-                                updateQuantity(product.id, 0);
-                              } else {
-                                const qty = parseInt(value);
-                                if (qty > 0) {
-                                  updateQuantity(product.id, qty);
+                                // Don't update selectedItems yet, wait for blur or valid number
+                                return;
+                              }
+                              
+                              const qty = parseInt(value);
+                              if (!isNaN(qty) && qty >= 0) {
+                                // Update selectedItems with valid number
+                                if (qty === 0) {
+                                  setSelectedItems(items => items.filter(item => item.productId !== product.id));
+                                } else {
+                                  const existingItem = selectedItems.find(item => item.productId === product.id);
+                                  if (existingItem) {
+                                    setSelectedItems(items =>
+                                      items.map(item =>
+                                        item.productId === product.id
+                                          ? { ...item, quantity: qty }
+                                          : item
+                                      )
+                                    );
+                                  } else {
+                                    const productData = products.find(p => p.id === product.id);
+                                    if (productData) {
+                                      setSelectedItems(items => [
+                                        ...items,
+                                        {
+                                          productId: product.id,
+                                          productName: productData.name,
+                                          quantity: qty,
+                                          pricePerUnit: productData.price,
+                                        }
+                                      ]);
+                                    }
+                                  }
                                 }
+                              }
+                            }}
+                            onBlur={(e) => {
+                              const value = e.target.value;
+                              if (value === '') {
+                                // Clear the item if field is empty on blur
+                                setSelectedItems(items => items.filter(item => item.productId !== product.id));
+                                setInputValues(prev => ({ ...prev, [product.id]: '' }));
                               }
                             }}
                             min="0"
@@ -295,15 +339,23 @@ export default function Catering() {
                           />
                           <div className="flex items-center gap-1">
                             <Button
-                              onClick={() => updateQuantity(product.id, (selectedItem?.quantity || 0) - 1)}
+                              onClick={() => {
+                                const currentQty = selectedItem?.quantity || 0;
+                                const newQty = Math.max(0, currentQty - 1);
+                                updateQuantity(product.id, newQty);
+                              }}
                               variant="outline"
                               size="sm"
-                              disabled={!selectedItem}
+                              disabled={!selectedItem || selectedItem.quantity <= 0}
                             >
                               <Minus className="h-4 w-4" />
                             </Button>
                             <Button
-                              onClick={() => updateQuantity(product.id, (selectedItem?.quantity || 0) + 1)}
+                              onClick={() => {
+                                const currentQty = selectedItem?.quantity || 0;
+                                const newQty = currentQty + 1;
+                                updateQuantity(product.id, newQty);
+                              }}
                               variant="outline"
                               size="sm"
                             >
